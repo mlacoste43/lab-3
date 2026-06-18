@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Course</title>
+
+    <style>
+
+        body{
+            font-family:Arial;
+            background:#f4f6f9;
+            padding:40px;
+        }
+
+        .card{
+            background:white;
+            padding:30px;
+            border-radius:20px;
+            max-width:700px;
+            margin:auto;
+            box-shadow:0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .title{
+            font-size:32px;
+            margin-bottom:20px;
+        }
+
+        .info{
+            margin-bottom:15px;
+            font-size:20px;
+        }
+
+        button{
+            padding:12px 20px;
+            border:none;
+            border-radius:10px;
+            cursor:pointer;
+            background:#3b82f6;
+            color:white;
+            font-size:16px;
+            margin-top:10px;
+            margin-right:10px;
+        }
+
+        .button-group{
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
+            margin-top:20px;
+        }
+
+        .notification{
+            position:fixed;
+            top:50%;
+            left:50%;
+            transform:translate(-50%, -50%);
+            background:white;
+            color:black;
+            padding:30px 50px;
+            border-radius:10px;
+            font-size:24px;
+            z-index:1000;
+            box-shadow:0 4px 15px rgba(0,0,0,0.2);
+            text-align:center;
+            min-width:300px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <div class="title"
+         th:text="${course.title}">
+    </div>
+
+    <div class="info">
+        <strong>Длительность:</strong>
+        <span th:text="${course.duration}"></span>
+        минут
+    </div>
+
+    <div class="info">
+        <strong>Категория:</strong>
+        <span th:text="${course.category != null
+                ? course.category.name
+                : 'Без категории'}">
+        </span>
+    </div>
+
+    <div class="info">
+        <strong>Статус курса:</strong>
+        <span th:text="${course.running
+                ? 'Запущен'
+                : 'Остановлен'}">
+        </span>
+    </div>
+
+    <!-- VIDEO -->
+    <div class="info"
+         th:if="${course.class.simpleName == 'VideoCourse'}">
+        <strong>Качество:</strong>
+        <span th:text="${course.resolution}"></span>
+    </div>
+
+    <div class="info"
+         th:if="${course.class.simpleName == 'VideoCourse'}">
+        <strong>Субтитры:</strong>
+        <span th:text="${course.subtitles
+                ? 'Включены'
+                : 'Выключены'}">
+        </span>
+    </div>
+
+    <div class="info"
+         th:if="${course.class.simpleName == 'VideoCourse'}">
+        <strong>Сложность:</strong>
+        <span th:text="${course.difficulty}"></span>
+    </div>
+
+    <!-- INTERACTIVE -->
+    <div class="info"
+         th:if="${course.class.simpleName == 'InteractiveCourse'}">
+        <strong>Прогресс:</strong>
+        <span th:text="${course.progress >= 100
+                ? 'Пройден'
+                : course.progress + '%'}">
+        </span>
+    </div>
+
+    <div class="info"
+         th:if="${course.class.simpleName == 'InteractiveCourse'}">
+        <strong>Сложность:</strong>
+        <span th:text="${course.difficulty}"></span>
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="button-group">
+
+        <button onclick="startCourse(this)"
+                th:data-id="${course.id}"
+                th:data-running="${course.running}">
+            Запустить
+        </button>
+
+        <!-- VIDEO BUTTONS -->
+        <a th:if="${course.class.simpleName == 'VideoCourse'}"
+           th:href="@{/course/toggleSubtitles/{id}(id=${course.id})}">
+            <button>
+                Переключить субтитры
+            </button>
+        </a>
+
+        <a th:if="${course.class.simpleName == 'VideoCourse'}"
+           th:href="@{/course/nextResolution/{id}(id=${course.id})}">
+            <button>
+                Изменить разрешение
+            </button>
+        </a>
+
+        <!-- INTERACTIVE BUTTON -->
+        <button th:if="${course.class.simpleName == 'InteractiveCourse'}"
+                th:data-id="${course.id}"
+                th:data-progress="${course.progress}"
+                th:data-running="${course.running}"
+                onclick="completeModule(this)">
+            Пройти модуль
+        </button>
+
+        <!-- BACK -->
+        <a href="/">
+            <button style="background:#6c757d">
+                Назад
+            </button>
+        </a>
+
+    </div>
+
+</div>
+
+<script>
+
+    function showNotification(message){
+
+        let notification =
+            document.createElement('div');
+
+        notification.className =
+            'notification';
+
+        notification.innerText =
+            message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(function(){
+
+            notification.remove();
+
+        }, 2000);
+    }
+
+    function startCourse(button){
+
+        let courseId =
+            button.getAttribute('data-id');
+
+        let isRunning =
+            button.getAttribute('data-running');
+
+        if(isRunning === 'true'){
+
+            showNotification(
+                'Курс уже запущен'
+            );
+
+        } else {
+
+            window.location.href =
+                '/course/start/' + courseId;
+        }
+    }
+
+    function completeModule(button){
+
+        let courseId =
+            button.getAttribute('data-id');
+
+        let progress =
+            parseInt(
+                button.getAttribute('data-progress')
+            );
+            
+        let isRunning =
+            button.getAttribute('data-running');
+
+        // Проверка: запущен ли курс
+        if(isRunning !== 'true'){
+
+            showNotification(
+                'Сначала запустите курс'
+            );
+
+            return;
+        }
+
+        if(progress >= 100){
+
+            showNotification(
+                'Курс уже пройден'
+            );
+
+            return;
+        }
+
+        let newProgress =
+            progress + 20;
+
+        if(newProgress > 100){
+
+            newProgress = 100;
+        }
+
+        showNotification(
+            'Модуль пройден. Прогресс: '
+            + newProgress + '%'
+        );
+
+        setTimeout(function(){
+
+            fetch('/course/completeModule/' + courseId, {
+
+                method:'POST'
+
+            }).then(function(){
+
+                location.reload();
+
+            });
+
+        }, 1200);
+    }
+
+</script>
+
+</body>
+</html>

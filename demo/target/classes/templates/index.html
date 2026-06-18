@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Course Platform</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: #f4f6f9;
+        }
+
+        .header {
+            background: #1f2937;
+            color: white;
+            padding: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            font-weight: normal;
+        }
+
+        .search-group input {
+            width: 80px;
+            padding: 4px 6px;
+            font-size: 12px;
+        }
+
+        .search-group button {
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            background: #10b981;
+            color: white;
+            border: none;
+        }
+
+        .container {
+            padding: 30px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            margin: 25px 0 15px;
+            color: #111827;
+            font-weight: bold;
+        }
+
+        .courses {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        button {
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .add { background: #10b981; color: white; }
+        .infoBtn { background: #3b82f6; color: white; }
+        .open { background: #8b5cf6; color: white; }
+        .delete { background: #ef4444; color: white; }
+
+        a { text-decoration: none; }
+
+        .error-msg {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <span>Онлайн Курсы</span>
+    
+    <div class="search-group">
+        <input type="number" id="courseId" placeholder="ID курса">
+        <button onclick="findStudentsByCourse()">Найти студентов</button>
+    </div>
+    
+    <div class="search-group">
+        <input type="number" id="studentId" placeholder="ID студента">
+        <button onclick="findCoursesByStudent()">Найти курсы</button>
+    </div>
+</div>
+
+<div class="container">
+
+    <div th:if="${error}" class="error-msg" th:text="${error}"></div>
+
+    <!-- VIDEO -->
+    <div class="section-title">Видео курсы</div>
+    <div class="courses">
+        <div class="card" th:each="course : ${videos}">
+            <div class="title" th:text="${course.title}"></div>
+            <div class="row">
+                <span>Длительность</span>
+                <span th:text="${course.duration + ' мин'}"></span>
+            </div>
+            <div class="row">
+                <span>Сложность</span>
+                <span th:text="${course.difficulty != null ? course.difficulty : 'Не указан'}"></span>
+            </div>
+            <div class="row">
+                <span>Тип</span>
+                <span>Видео</span>
+            </div>
+            <div class="buttons">
+                <a th:href="@{/courseInfo/{id}(id=${course.id})}">
+                    <button class="infoBtn">Информация</button>
+                </a>
+                <a th:href="@{/addVideoToStudent/{id}(id=${course.id})}">
+                    <button class="add">Добавить</button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- INTERACTIVE -->
+    <div class="section-title">Интерактивные курсы</div>
+    <div class="courses">
+        <div class="card" th:each="course : ${interactive}">
+            <div class="title" th:text="${course.title}"></div>
+            <div class="row">
+                <span>Сложность</span>
+                <span th:text="${course.difficulty != null ? course.difficulty : 'Не указан'}"></span>
+            </div>
+            <div class="row">
+                <span>Длительность</span>
+                <span th:text="${course.duration + ' мин'}"></span>
+            </div>
+            <div class="row">
+                <span>Тип</span>
+                <span>Интерактив</span>
+            </div>
+            <div class="buttons">
+                <a th:href="@{/courseInfo/{id}(id=${course.id})}">
+                    <button class="infoBtn">Информация</button>
+                </a>
+                <a th:href="@{/addInteractiveToStudent/{id}(id=${course.id})}">
+                    <button class="add">Добавить</button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MY COURSES -->
+    <div class="section-title">Мои курсы</div>
+    <div class="courses">
+        <div class="card" th:each="course : ${myCourses}">
+            <div class="title" th:text="${course.title}"></div>
+            <div class="row">
+                <span>Сложность</span>
+                <span th:text="${course.difficulty != null ? course.difficulty : 'Не указан'}"></span>
+            </div>
+            <div class="row">
+                <span>Длительность</span>
+                <span th:text="${course.duration + ' мин'}"></span>
+            </div>
+            <div class="buttons">
+                <a th:href="@{/course/{id}(id=${course.id})}">
+                    <button class="open">Открыть</button>
+                </a>
+                <a th:href="@{/removeCourse/{id}(id=${course.id})}">
+                    <button class="delete">Удалить</button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function findStudentsByCourse() {
+        var courseId = document.getElementById('courseId').value;
+        if (!courseId) {
+            alert('Введите ID курса');
+            return;
+        }
+        window.location.href = '/search/courseStudents?courseId=' + courseId;
+    }
+    
+    function findCoursesByStudent() {
+        var studentId = document.getElementById('studentId').value;
+        if (!studentId) {
+            alert('Введите ID студента');
+            return;
+        }
+        window.location.href = '/search/studentCourses?studentId=' + studentId;
+    }
+</script>
+
+</body>
+</html>

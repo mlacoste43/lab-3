@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Результаты поиска</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: #f4f6f9;
+        }
+
+        .header {
+            background: #1f2937;
+            color: white;
+            padding: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            font-weight: normal;
+        }
+
+        .search-group input {
+            width: 80px;
+            padding: 4px 6px;
+            font-size: 12px;
+        }
+
+        .search-group button {
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            background: #10b981;
+            color: white;
+            border: none;
+        }
+
+        .back-link {
+            margin-left: auto;
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: normal;
+        }
+
+        .container {
+            padding: 30px;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #4e73df, #224abe);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            margin: 25px 0 15px;
+            color: #111827;
+            font-weight: bold;
+        }
+
+        .courses, .students-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        button {
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .open { background: #8b5cf6; color: white; }
+        .infoBtn { background: #3b82f6; color: white; }
+        .delete { background: #ef4444; color: white; }
+
+        a { text-decoration: none; }
+
+        .error-msg {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .empty-msg {
+            background: #f3f4f6;
+            color: #6b7280;
+            padding: 30px;
+            text-align: center;
+            border-radius: 16px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <span>Результаты поиска</span>
+    
+    <div class="search-group">
+        <input type="number" id="courseIdInput" placeholder="ID курса">
+        <button onclick="searchCourseStudents()">Найти студентов</button>
+    </div>
+    
+    <div class="search-group">
+        <input type="number" id="studentIdInput" placeholder="ID студента">
+        <button onclick="searchStudentCourses()">Найти курсы</button>
+    </div>
+    
+    <a href="/" class="back-link">← На главную</a>
+</div>
+
+<div class="container">
+
+    <div class="result-header" th:if="${searchType == 'students'}">
+        <h2>Студенты, изучающие курс: <span th:text="${searchTarget}"></span></h2>
+        <p th:if="${course}">ID курса: <span th:text="${course.id}"></span></p>
+    </div>
+
+    <div class="result-header" th:if="${searchType == 'courses'}">
+        <h2>Курсы студента: <span th:text="${searchTarget}"></span></h2>
+        <p th:if="${student}">ID студента: <span th:text="${student.id}"></span></p>
+    </div>
+
+    <div th:if="${error}" class="error-msg" th:text="${error}"></div>
+
+    <!-- Результаты для студентов курса -->
+    <div th:if="${searchType == 'students'}">
+        <div class="section-title">Студенты (всего: <span th:text="${#lists.size(students)}"></span>)</div>
+        <div class="students-list" th:unless="${#lists.isEmpty(students)}">
+            <div class="card" th:each="student : ${students}">
+                <div class="title" th:text="${student.name}"></div>
+                <div class="row">
+                    <span>ID студента</span>
+                    <span th:text="${student.id}"></span>
+                </div>
+                <div class="row">
+                    <span>Количество курсов</span>
+                    <span th:text="${#lists.size(student.courses)}"></span>
+                </div>
+            </div>
+        </div>
+        <div th:if="${#lists.isEmpty(students)}" class="empty-msg">
+            Нет студентов, изучающих этот курс
+        </div>
+    </div>
+
+    <!-- Результаты для курсов студента -->
+    <div th:if="${searchType == 'courses'}">
+        <div class="section-title">Курсы (всего: <span th:text="${#lists.size(courses)}"></span>)</div>
+        <div class="courses" th:unless="${#lists.isEmpty(courses)}">
+            <div class="card" th:each="course : ${courses}">
+                <div class="title" th:text="${course.title}"></div>
+                <div class="row">
+                    <span>ID курса</span>
+                    <span th:text="${course.id}"></span>
+                </div>
+                </div>
+            </div>
+        </div>
+        <div th:if="${#lists.isEmpty(courses)}" class="empty-msg">
+            У этого студента нет курсов
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function searchCourseStudents() {
+        var courseId = document.getElementById('courseIdInput').value;
+        if (!courseId) {
+            alert('Введите ID курса');
+            return;
+        }
+        window.location.href = '/search/courseStudents?courseId=' + courseId;
+    }
+    
+    function searchStudentCourses() {
+        var studentId = document.getElementById('studentIdInput').value;
+        if (!studentId) {
+            alert('Введите ID студента');
+            return;
+        }
+        window.location.href = '/search/studentCourses?studentId=' + studentId;
+    }
+    
+    function searchStudentCoursesById(studentId) {
+        window.location.href = '/search/studentCourses?studentId=' + studentId;
+    }
+</script>
+
+</body>
+</html>
